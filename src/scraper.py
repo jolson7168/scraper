@@ -54,14 +54,21 @@ def getCmdLineParser():
 
     return parser
 
+def sendToOutput(destination, vals):
+	line=vals["url"]+"| "+json.dumps(vals)
+	print(line, file=destination)
+
 def scrapeIt(scrapeObj):
+	retval = {}
+	retval["url"]=scrapeObj["url"]
 	response = urllib2.urlopen(scrapeObj["url"])
 	html = response.read()
 	for thisTag in scrapeObj["get"]:
 		eliminate=""
 		if "eliminate" in thisTag:
 			eliminate=thisTag["eliminate"]
-		print(thisTag["name"]+": "+grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate))
+		retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+	return retval
 
 if __name__ == '__main__':
 
@@ -73,11 +80,12 @@ if __name__ == '__main__':
 	rightNow = time.strftime("%Y%m%d%H%M%S")
 	logger = initLog(rightNow)
 	logger.info('Starting Run: '+currentDayStr()+'  ==============================')
-
+	outFile = open(args.output_file,'w')
 	with open(args.input_file) as f:
 		for line in f:
-			scrapeIt(json.loads(line))
-
+			vals = scrapeIt(json.loads(line))
+			sendToOutput(outFile, vals)
+	outFile.close()
     	
 
 	logger.info('Ending Run: '+currentDayStr()+'  ==============================')
