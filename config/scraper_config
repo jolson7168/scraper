@@ -1,0 +1,13 @@
+;----------------------------------------------------------
+; Configures the settings for ad hoc logging
+;
+;  LOGFILE    	 		: where you want the logfile to go
+;  LOGTIMEFORMAT   	 	: format for the timestamp in the log
+;  LOGFORMAT            : format for the log line
+;  LOGNAME              : name of the log
+[logging]
+logPath=/media/USB1/mine/git/public/scraper/logs/
+logFileName=scrape.log
+logTimeFormat=%Y-%m-%d %H:%M:%S
+logFormat=%(asctime)s %(levelname)s %(message)s
+logname="scrape"
