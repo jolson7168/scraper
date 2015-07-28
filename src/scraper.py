@@ -29,14 +29,14 @@ def initLog(rightNow):
     return logger
 
 
-def grabTitle(html,openTag, closeTag):
+def grabTag(html,openTag, closeTag, eliminate):
 	result=re.search(openTag+'(.*)'+closeTag, html)
-	return result.group(1).replace(" | eBay","")
+	if hasattr(result, 'group'):
+		return result.group(1).replace(eliminate,"")
+	else:
+		return "Null"
 
-def getHTML(url):
-	response = urllib2.urlopen(url)
-	html = response.read()
-	return grabTitle(html, "<title>", "</title>")
+
 
 def getCmdLineParser():
     import argparse
@@ -55,7 +55,13 @@ def getCmdLineParser():
     return parser
 
 def scrapeIt(scrapeObj):
-	print(json.dumps(scrapeObj))
+	response = urllib2.urlopen(scrapeObj["url"])
+	html = response.read()
+	for thisTag in scrapeObj["get"]:
+		eliminate=""
+		if "eliminate" in thisTag:
+			eliminate=thisTag["eliminate"]
+		print(thisTag["name"]+": "+grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate))
 
 if __name__ == '__main__':
 
