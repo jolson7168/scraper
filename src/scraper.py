@@ -30,9 +30,14 @@ def initLog(rightNow):
 
 
 def grabTag(html,openTag, closeTag, eliminate):
+
 	result=re.search(openTag+'(.*)'+closeTag, html)
 	if hasattr(result, 'group'):
-		return result.group(1).replace(eliminate,"")
+		try:
+			s = result.group(1).replace(eliminate,"")
+		except:
+			s = "utf issue. fix this"	 
+		return s
 	else:
 		return "Null"
 
