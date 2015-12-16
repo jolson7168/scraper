@@ -66,13 +66,17 @@ def sendToOutput(destination, vals):
 def scrapeIt(scrapeObj):
 	retval = {}
 	retval["url"]=scrapeObj["url"]
-	response = urllib2.urlopen(scrapeObj["url"])
-	html = response.read()
-	for thisTag in scrapeObj["get"]:
-		eliminate=""
-		if "eliminate" in thisTag:
-			eliminate=thisTag["eliminate"]
-		retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+	print(scrapeObj["url"])
+	try:
+		response = urllib2.urlopen(scrapeObj["url"])
+		html = response.read()
+		for thisTag in scrapeObj["get"]:
+			eliminate=""
+			if "eliminate" in thisTag:
+				eliminate=thisTag["eliminate"]
+			retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+	except Exception as e:
+		retval["error"]=e.msg
 	return retval
 
 if __name__ == '__main__':
