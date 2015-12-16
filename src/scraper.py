@@ -32,27 +32,26 @@ def initLog(rightNow):
     return logger
 
 
-def grabTag2(soup, openTag, closeTag, eliminate):
+def grabTag2(soup, openTag, closeTag, eliminate=None):
 	if closeTag is Null:
 		if openTag=="<title>":
 			return soup.title.string
 
 
 
-def grabTag(html, openTag, closeTag, eliminate):
-
+def grabTag(html, openTag, closeTag, eliminate=None):
 	result=re.search(openTag+'(.*)'+closeTag, html)
-
 	if hasattr(result, 'group'):
 		try:
-			s = result.group(1).replace(eliminate,"")
+			if eliminate == None:
+				s = result.group(1)
+			else:
+				s = result.group(1).replace(eliminate,"")
 		except:
 			s = "utf issue. fix this"	 
 		return s
 	else:
 		return "Null"
-
-
 
 def getCmdLineParser():
     import argparse
@@ -86,7 +85,7 @@ def scrapeIt(scrapeObj):
 		html = response.read()
 		soupObj = BeautifulSoup(html, "html.parser")
 		for thisTag in scrapeObj["get"]:
-			eliminate=""
+			eliminate=None
 			if "eliminate" in thisTag:
 				eliminate=thisTag["eliminate"]
 			if "openTag" in thisTag and "closeTag" in thisTag:
@@ -118,6 +117,6 @@ if __name__ == '__main__':
 			sendToOutput(outFile, vals)
 			x=x+1
 	outFile.close()
-    	
+   	
 
 	logger.info('Ending Run: '+currentDayStr()+'  ==============================')
