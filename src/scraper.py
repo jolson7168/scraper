@@ -2,12 +2,15 @@
 
 from __future__ import print_function      # get latest print functionality
 
+from bs4 import BeautifulSoup
 import urllib2
 import re
 import logging
 import sys
 import time               # sleep function for connection back-off
 import json               # JSON object encoding/decoding
+from random import randint
+from time import sleep
 
 from ConfigParser import RawConfigParser
 
@@ -29,9 +32,17 @@ def initLog(rightNow):
     return logger
 
 
-def grabTag(html,openTag, closeTag, eliminate):
+def grabTag2(soup, openTag, closeTag, eliminate):
+	if closeTag is Null:
+		if openTag=="<title>":
+			return soup.title.string
+
+
+
+def grabTag(html, openTag, closeTag, eliminate):
 
 	result=re.search(openTag+'(.*)'+closeTag, html)
+
 	if hasattr(result, 'group'):
 		try:
 			s = result.group(1).replace(eliminate,"")
@@ -60,23 +71,31 @@ def getCmdLineParser():
     return parser
 
 def sendToOutput(destination, vals):
-	line=vals["url"]+"| "+json.dumps(vals)
-	print(line, file=destination)
+	if vals is not None:
+		line=vals["url"]+"| "+json.dumps(vals)
+		print(line, file=destination)
 
 def scrapeIt(scrapeObj):
 	retval = {}
 	retval["url"]=scrapeObj["url"]
-	print(scrapeObj["url"])
+
+	opener = urllib2.build_opener()
+	opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 	try:
-		response = urllib2.urlopen(scrapeObj["url"])
+		response = opener.open(scrapeObj["url"])
 		html = response.read()
+		soupObj = BeautifulSoup(html, "html.parser")
 		for thisTag in scrapeObj["get"]:
 			eliminate=""
 			if "eliminate" in thisTag:
 				eliminate=thisTag["eliminate"]
-			retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
-	except Exception as e:
-		retval["error"]=e.msg
+			if "openTag" in thisTag and "closeTag" in thisTag:
+				retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+			elif "tag" in thisTag:
+				retval[thisTag["name"]]=grabTag2(soup, thisTag["Tag"], None, eliminate)
+	except: 
+		logger.info("HTTP Exception: "+scrapeObj["url"])
+		return None
 	return retval
 
 if __name__ == '__main__':
@@ -89,11 +108,15 @@ if __name__ == '__main__':
 	rightNow = time.strftime("%Y%m%d%H%M%S")
 	logger = initLog(rightNow)
 	logger.info('Starting Run: '+currentDayStr()+'  ==============================')
+	x = 1
 	outFile = open(args.output_file,'w')
 	with open(args.input_file) as f:
 		for line in f:
+			sleep(randint(2,10))
+			logger.info("Processing Record: "+str(x))
 			vals = scrapeIt(json.loads(line))
 			sendToOutput(outFile, vals)
+			x=x+1
 	outFile.close()
     	
 
