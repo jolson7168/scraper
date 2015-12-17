@@ -67,6 +67,8 @@ def getCmdLineParser():
     parser.add_argument('-o', '--output_file', default='../data/scraped.csv', 
                         help='data output file name')
 
+    parser.add_argument('-t', '--test_file', help='html file for testing name')
+
     return parser
 
 def sendToOutput(destination, vals):
@@ -74,28 +76,55 @@ def sendToOutput(destination, vals):
 		line=vals["url"]+"| "+json.dumps(vals)
 		print(line, file=destination)
 
-def scrapeIt(scrapeObj):
-	retval = {}
-	retval["url"]=scrapeObj["url"]
+def findBetween( s, first, last ):
+	str1= s.decode('utf-8', 'ignore')
+	try:
+		start = str1.index( first ) + len( first )
+		end = str1.index( last, start )
+		return str1[start:end]
+	except ValueError:
+		return ""
 
+def getBetween(html, openTag, closeTag, eliminate):
+	retval = findBetween(html, openTag, closeTag)
+	if len(retval) == 0:
+		retval = "None"
+	return retval
+
+def scrapeIt(scrapeObj, html = None, testFilePath = None):
+	retval = {}
 	opener = urllib2.build_opener()
 	opener.addheaders = [('User-agent', 'Mozilla/5.0')]
 	try:
-		response = opener.open(scrapeObj["url"])
-		html = response.read()
+		if html == None:
+			response = opener.open(scrapeObj["url"])
+			html = response.read()
+			retval["url"]=testFilePath
+		else:
+			retval["url"]=scrapeObj["url"]
 		soupObj = BeautifulSoup(html, "html.parser")
 		for thisTag in scrapeObj["get"]:
 			eliminate=None
 			if "eliminate" in thisTag:
 				eliminate=thisTag["eliminate"]
-			if "openTag" in thisTag and "closeTag" in thisTag:
-				retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
-			elif "tag" in thisTag:
-				retval[thisTag["name"]]=grabTag2(soup, thisTag["Tag"], None, eliminate)
+			if "method" in thisTag:
+				if thisTag["method"] == "regexp":
+					retval[thisTag["name"]]=grabTag(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+				elif thisTag["method"] == "tag":
+					retval[thisTag["name"]]=grabTag2(soup, thisTag["Tag"], None, eliminate)
+				elif thisTag["method"] == "instr":
+					retval[thisTag["name"]]=getBetween(html, thisTag["openTag"], thisTag["closeTag"], eliminate)
+
 	except: 
 		logger.info("HTTP Exception: "+scrapeObj["url"])
 		return None
 	return retval
+
+def readTest(fname):
+	with open(fname) as f:
+		data=f.read()
+	f.close()
+	return data
 
 if __name__ == '__main__':
 
@@ -108,12 +137,17 @@ if __name__ == '__main__':
 	logger = initLog(rightNow)
 	logger.info('Starting Run: '+currentDayStr()+'  ==============================')
 	x = 1
+	html = None
+	if args.test_file:
+		fname = args.test_file
+		html = readTest(args.test_file)
 	outFile = open(args.output_file,'w')
 	with open(args.input_file) as f:
 		for line in f:
-			sleep(randint(2,10))
+			if html is None:
+				sleep(randint(20,100))
 			logger.info("Processing Record: "+str(x))
-			vals = scrapeIt(json.loads(line))
+			vals = scrapeIt(json.loads(line), html, fname)
 			sendToOutput(outFile, vals)
 			x=x+1
 	outFile.close()
