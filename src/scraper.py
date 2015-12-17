@@ -51,7 +51,7 @@ def grabTag(html, openTag, closeTag, eliminate=None):
 			s = "utf issue. fix this"	 
 		return s
 	else:
-		return "Null"
+		return "None"
 
 def getCmdLineParser():
     import argparse
@@ -66,8 +66,8 @@ def getCmdLineParser():
 
     parser.add_argument('-o', '--output_file', default='../data/scraped.csv', 
                         help='data output file name')
-
     parser.add_argument('-t', '--test_file', help='html file for testing name')
+    parser.add_argument('-s', '--save_html', help='save html file')
 
     return parser
 
@@ -91,7 +91,14 @@ def getBetween(html, openTag, closeTag, eliminate):
 		retval = "None"
 	return retval
 
-def scrapeIt(scrapeObj, html = None, testFilePath = None):
+def saveIt(directory, url, html):
+	end=url[url.rfind("/")+1:]
+	fname=directory+"/"+end+".html"
+	text_file = open(fname, "w")
+	text_file.write(html)
+	text_file.close()	
+	
+def scrapeIt(scrapeObj, html = None, testFilePath = None, saveDirectory = None):
 	retval = {}
 	opener = urllib2.build_opener()
 	opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -99,9 +106,11 @@ def scrapeIt(scrapeObj, html = None, testFilePath = None):
 		if html == None:
 			response = opener.open(scrapeObj["url"])
 			html = response.read()
-			retval["url"]=testFilePath
-		else:
+			if saveDirectory is not None:
+				saveIt(saveDirectory, scrapeObj["url"], html)
 			retval["url"]=scrapeObj["url"]
+		else:
+			retval["url"]=testFilePath
 		soupObj = BeautifulSoup(html, "html.parser")
 		for thisTag in scrapeObj["get"]:
 			eliminate=None
@@ -148,7 +157,7 @@ if __name__ == '__main__':
 			if html is None:
 				sleep(randint(2,10))
 			logger.info("Processing Record: "+str(x))
-			vals = scrapeIt(json.loads(line), html, fname)
+			vals = scrapeIt(json.loads(line), html, fname, args.save_html)
 			sendToOutput(outFile, vals)
 			x=x+1
 	outFile.close()
