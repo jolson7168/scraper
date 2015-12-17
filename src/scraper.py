@@ -138,6 +138,7 @@ if __name__ == '__main__':
 	logger.info('Starting Run: '+currentDayStr()+'  ==============================')
 	x = 1
 	html = None
+	fname = None
 	if args.test_file:
 		fname = args.test_file
 		html = readTest(args.test_file)
