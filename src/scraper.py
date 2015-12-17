@@ -145,7 +145,7 @@ if __name__ == '__main__':
 	with open(args.input_file) as f:
 		for line in f:
 			if html is None:
-				sleep(randint(20,100))
+				sleep(randint(2,10))
 			logger.info("Processing Record: "+str(x))
 			vals = scrapeIt(json.loads(line), html, fname)
 			sendToOutput(outFile, vals)
