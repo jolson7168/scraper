@@ -1,0 +1,15 @@
+;----------------------------------------------------------
+; Configures the settings for scraping a report
+;
+;  LOGIN    	 	: Site login
+;  PASSWORD   	 	: Site Password
+;  URL	 	        : Auth URL
+;  REFERER		: Referer URL
+;  HOST			: Host name
+
+[scrape]
+login=
+password=
+url=
+referer=
+host=
